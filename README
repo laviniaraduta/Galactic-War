@@ -1,0 +1,163 @@
+========================= Lavinia-Maria Raduta 2021 =========================
+
+========================== Galactic War Simulation ==========================
+
+This homework proposes to simulate a war between planets, using generic data
+structures (Circular Doubly Linked Lists). The planets can be added in the
+galaxy, can be removed from the galaxy, can have updates for the shields
+and of course, can have collisions with the neighbouring planets.
+
+FILES : galactic_war.c
+		functions.c
+		CircularDoublyLinkedList.c
+		functions.h
+		CircularDoublyLinkedList.h
+		utils.h
+
+DESCRIPTION OF THE FUNCTIONS IN THE FILES:
+
+> galactic_war.c : the file containing the main(), where the commands are read
+				   and the functions for every action are called.
+
+	- the number of commands is read;
+	- the strings that represent the commands are read and for each of them
+	the parameters are read (planet position, shield position, values for
+	upgrades, depending on the description of every command);
+	- galaxy = the big circular dll that contains as data a structure, which
+	also contain another circular dll- the shields;
+	- shields = circular dll that contains int values (initially 1s).
+
+> functions.c : the file containing the implementation of every function for
+			    every action needed in the simulation. The declaration of the
+			    functions can be found in the header "functions.h".
+
+	- add_function() : adding a planet in the galaxy
+		* the name of the planet, the position where it should be added and
+		  the number of shields is read;
+		* the position has to be less than the number of planets already
+		  existing, else an error message is displayed and nothing is done;
+		* the struct (planet) for the data of every node of the circular dll
+		  is allocated and its members are initialised;
+		* the member containing the circular dll is initially initialised with
+		  NULL, the creation of it being made later;
+		* the node containing the planet structure is added on the position
+		  pos in the galaxy and then we take a pointer to it "curr";
+		* the auxiliary planet structure used for reading is deallocated
+		  because is now useless;
+		* for every node added in the galaxy we have to create the circular
+		  dll of shields. for that we have to use a cast to structure planet_t*
+		  of the data contained in the node.
+
+	- remove_function() : deleting a planet from the galaxy
+		* the position has to be less than the number of planets already
+		  existing, else an error message is displayed and nothing is done;
+		* we need a variable of type dll_node that will keep the result of the
+		  function that removes the nth node from the galaxy;
+		* there has to be a discussion after the parameter imploded:
+			-> if imploded = 0 then the caller wants to eliminate the planet,
+			   so the message of removing is displayed;
+			-> if imploded = 1 then the function is used to eliminate a "dead"
+			   planet, so the message is not necessary.
+		* it is our responsibility to free the memory for the node we want to
+		  eliminate, so we start by deallocating the list of shields, then we
+		  free the structure containg the shields (planet), then the node
+		  itself.
+
+  	- upgrade_function() : upgrade the value of one shield of a planet
+  		* the position has to be less than the number of planets already
+		  existing, else an error message is displayed and nothing is done;
+		* positioning on the right planet using the function from the library;
+		* the position of the shield has to be less than the number of shields
+		of the planet already existing, else an error message is displayed and
+		nothing is done;
+		* positioning on the right node (shield) in the shields list;
+		* adding at the current value the value given by the parameter;
+		* this function will also be used to update the shield in case of a
+		  collision, so the value can also be negative (-1 in this case).
+
+	- add_shield_function() : add a shield at the end of the list for a planet
+		* the position has to be less than the number of planets already
+		  existing, else an error message is displayed and nothing is done;
+		* positioning on the right planet in the galaxy;
+		* adding a node at the end (on the position shields->size) in the
+		  shields list with the value given in the parameter val.
+
+	- remove_shield_function() : delete a shield on the specified position of
+								 a planet
+		* the position has to be less than the number of planets already
+		  existing, else an error message is displayed and nothing is done;
+		* positioning on the right planet in the galaxy;
+		* if the planet doesn't have a number of shields bigger than the
+		  shield position that we want to eliminate, an error message is
+		  displayed and nothing happens;
+		* the removal can be applied only on the planets that have more than 4
+		  shields;
+		* to delete the node from the shields the function from the header is
+		used and then the memory for the data and the node itself is freed.
+
+	- show_function() : displaying information about a planet
+		* the position has to be less than the number of planets already
+		  existing, else an error message is displayed and nothing is done;
+		* positioning on the right planet in the galaxy;
+		* if the planet is alone in the galaxy it doesn’t have neighbours;
+		* if there are 2 planets in the galaxy, then there is one neighbour;
+		* to display the shields we use the function to print ints from the
+		  header;
+
+	- rotate_function() : rotate the shield list of a planet
+		* the position has to be less than the number of planets already
+		  existing, else an error message is displayed and nothing is done;
+		* verifying if the direction is right;
+		* positioning on the right planet in the galaxy;
+		* to make the rotation efficient, if the number of units > number of
+		  shields the result is the same for the number of units = units %
+		  number of shields;
+		* to rotate :
+			-> in trigonometric direction (t) : we just have to move the head
+			   of the list to the right on the node on the position "units";
+			-> in clockwise direction (c) : we just have to move the head of
+			   the list to the left with units <=> moving the head in
+			   trigonometric direction with shield size + units positions;
+		* so, it is necessary to only implement the trigonometric rotation.
+
+	- collision_function() : simulate the collision between planets
+		* the position has to be less than the number of planets already
+		  existing, else an error message is displayed and nothing is done;
+		* positioning on the right planet in the galaxy (using 2 pointers for
+		  the 2 planets);
+		* calculating the collision points and positioning on the right nodes
+		  in the shields list of each planet;
+		* for the two shields colliding we have to verify if their shield has
+		  value 0 (the planet implodes). if it is the case, the variable that
+		  keeps the state of the planet (alive1 and alive2, respectively)
+		  becomes 0;
+		* to finish the collision we have 4 cases :
+			-> planet1 implodes, and planet2 is still alive : 
+				~ the number of kills for the latter increments;
+				~ the collision shield value of the latter decrements (use of
+				  function upgrade with the value -1);
+				~ the first planet is removed from the galaxy;
+			-> planet2 implodes, and planet1 is still alive : 
+				~ the number of kills for the latter increments;
+				~ the collision shield value of the latter decrements (use of
+				  function upgrade with the value -1);
+				~ the first planet is removed from the galaxy;
+			-> both planets are alive after the collision :
+				~ the collision shield value of the both planets decrements    
+				  (use of function upgrade with the value -1);
+			-> both planets implode :
+				~ the planets are removed from the galaxy;
+				~ after the first is removed, the second will be on the
+				  position the other was before it was removed;
+
+	- free_galaxy() : free the memory for all planets and the galaxy
+		* we start at the head of the galaxy list;
+		* for every planet (node of the galaxy) we free the memory for the
+		shields list, using the function in the header.
+		* after the free of shields, the pointer to this list is going to be
+		NULL so it is safe now to free every planet;
+		* freeing the nodes of the galaxy with the function in the header.
+
+>CircularDoublylinkedList.c : the file containinhg functions for working with
+							  circular dll (from the sd lab).
+		
